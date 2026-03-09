@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Institut MiraLocks</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous">
+  <style>
+    :root {
+      --vert:      #0C3320;
+      --vert-c:    #1B6B45;
+      --or:        #C9A84C;
+      --or-c:      #E8D080;
+      --blanc:     #FAFAF8;
+      --gris:      #F5F3EF;
+      --gris-d:    #6B6459;
+      --danger:    #DC2626;
+      --success:   #16A34A;
+      --warning:   #D97706;
+      --r:         10px;
+      --shadow:    0 4px 20px rgba(0,0,0,.1);
+    }
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Playfair Display',Georgia,serif; background:var(--gris); color:#1a1a1a; min-height:100vh; }
+    button,input,select,textarea { font:inherit; border:none; outline:none; }
+
+    /* ── LOGIN PAGE ─────────────────────────────────────── */
+    #login-page {
+      min-height:100vh; display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(135deg,var(--vert) 0%,var(--vert-c) 100%);
+      padding:1.5rem;
+    }
+    .login-box {
+      background:#fff; border-radius:20px; padding:2.5rem; width:100%; max-width:420px;
+      box-shadow:0 20px 60px rgba(0,0,0,.3);
+    }
+    .login-logo { text-align:center; margin-bottom:2rem; }
+    .login-logo .icon { font-size:3rem; }
+    .login-logo h1 { font-size:1.4rem; color:var(--vert); margin-top:.5rem; }
+    .login-logo p { font-size:.85rem; color:var(--gris-d); margin-top:.25rem; }
+    .login-field { margin-bottom:1.25rem; }
+    .login-field label { display:block; font-size:.85rem; font-weight:600; color:var(--vert); margin-bottom:.4rem; }
+    .login-field input {
+      width:100%; padding:.75rem 1rem;
+      border:2px solid #e5e5e5; border-radius:var(--r);
+      font-size:1rem; transition:border-color .2s;
+    }
+    .login-field input:focus { border-color:var(--or); }
+    .btn-login {
+      width:100%; padding:.9rem; background:var(--vert); color:var(--or);
+      border-radius:var(--r); font-size:1rem; font-weight:700; cursor:pointer;
+      transition:background .2s, transform .15s;
+    }
+    .btn-login:hover { background:var(--vert-c); transform:translateY(-1px); }
+    .login-error {
+      background:#FEF2F2; border:1px solid #FCA5A5; color:#DC2626;
+      border-radius:var(--r); padding:.75rem 1rem; margin-top:1rem;
+      font-size:.9rem; display:none;
+    }
+    .login-error.show { display:block; }
+
+    /* ── ADMIN LAYOUT ───────────────────────────────────── */
+    #admin-page { display:none; min-height:100vh; }
+    .admin-header {
+      background:var(--vert); color:#fff; padding:0 1.5rem;
+      display:flex; align-items:center; justify-content:space-between;
+      height:60px; position:sticky; top:0; z-index:100;
+      box-shadow:0 2px 12px rgba(0,0,0,.2);
+    }
+    .admin-header-left { display:flex; align-items:center; gap:1rem; }
+    .admin-title { font-size:1.1rem; font-weight:700; color:var(--or); }
+    .admin-subtitle { font-size:.8rem; color:rgba(255,255,255,.6); }
+    .btn-logout {
+      background:rgba(255,255,255,.1); color:rgba(255,255,255,.8);
+      border:1px solid rgba(255,255,255,.2); border-radius:8px;
+      padding:.4rem .9rem; font-size:.85rem; cursor:pointer;
+      transition:background .2s;
+    }
+    .btn-logout:hover { background:rgba(255,255,255,.2); }
+
+    .admin-body { display:flex; min-height:calc(100vh - 60px); }
+
+    /* ── SIDEBAR ────────────────────────────────────────── */
+    .sidebar {
+      width:220px; background:#fff; border-right:1px solid #e8e8e8;
+      padding:1.25rem 0; flex-shrink:0;
+      position:sticky; top:60px; height:calc(100vh - 60px); overflow-y:auto;
+    }
+    .sidebar-section { padding:.5rem 1rem .25rem; font-size:.7rem; font-weight:700;
+      color:var(--gris-d); letter-spacing:.1em; text-transform:uppercase; }
+    .nav-item {
+      display:flex; align-items:center; gap:.75rem;
+      padding:.65rem 1.25rem; cursor:pointer;
+      color:#444; font-size:.9rem;
+      transition:background .15s, color .15s;
+      border-left:3px solid transparent;
+    }
+    .nav-item:hover { background:var(--gris); color:var(--vert); }
+    .nav-item.active { background:rgba(12,51,32,.07); color:var(--vert);
+      border-left-color:var(--or); font-weight:700; }
+    .nav-item i { width:18px; text-align:center; }
+    .nav-badge {
+      margin-left:auto; background:var(--danger); color:#fff;
+      border-radius:999px; padding:.1rem .45rem; font-size:.7rem; font-weight:700;
+    }
+
+    /* ── MAIN CONTENT ───────────────────────────────────── */
+    .admin-main { flex:1; padding:1.75rem; overflow-y:auto; }
+    .panel { display:none; }
+    .panel.active { display:block; }
+
+    .panel-header {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:1.75rem; flex-wrap:wrap; gap:1rem;
+    }
+    .panel-title { font-size:1.4rem; color:var(--vert); }
+    .panel-title span { font-size:.9rem; color:var(--gris-d); font-weight:400; margin-left:.5rem; }
+
+    /* ── BOUTONS ────────────────────────────────────────── */
+    .btn {
+      display:inline-flex; align-items:center; gap:.4rem;
+      padding:.55rem 1.1rem; border-radius:8px; font-size:.88rem;
+      font-weight:700; cursor:pointer; transition:all .15s;
+    }
+    .btn-primary { background:var(--vert); color:var(--or); }
+    .btn-primary:hover { background:var(--vert-c); }
+    .btn-success { background:var(--success); color:#fff; }
+    .btn-success:hover { filter:brightness(1.1); }
+    .btn-danger  { background:var(--danger);  color:#fff; }
+    .btn-danger:hover  { filter:brightness(1.1); }
+    .btn-warning { background:var(--warning); color:#fff; }
+    .btn-warning:hover { filter:brightness(1.1); }
+    .btn-outline { background:transparent; border:1.5px solid var(--vert); color:var(--vert); }
+    .btn-outline:hover { background:var(--vert); color:var(--or); }
+    .btn-sm { padding:.35rem .7rem; font-size:.8rem; }
+    .btn-icon { padding:.4rem .5rem; }
+
+    /* ── TOAST ──────────────────────────────────────────── */
+    #toast {
+      position:fixed; bottom:1.5rem; right:1.5rem; z-index:9999;
+      background:#1a1a1a; color:#fff; padding:.75rem 1.25rem;
+      border-radius:10px; font-size:.9rem;
+      transform:translateY(100px); opacity:0;
+      transition:all .3s cubic-bezier(.4,0,.2,1);
+      max-width:320px; box-shadow:0 8px 24px rgba(0,0,0,.3);
+      display:flex; align-items:center; gap:.6rem;
+    }
+    #toast.show { transform:translateY(0); opacity:1; }
+    #toast.success { background:var(--success); }
+    #toast.error   { background:var(--danger); }
+    #toast.warning { background:var(--warning); }
+
+    /* ── TABLE ──────────────────────────────────────────── */
+    .data-table { width:100%; border-collapse:collapse; background:#fff;
+      border-radius:var(--r); overflow:hidden; box-shadow:var(--shadow); }
+    .data-table th {
+      background:var(--vert); color:var(--or);
+      padding:.75rem 1rem; font-size:.82rem; font-weight:700;
+      text-align:left; letter-spacing:.04em;
+    }
+    .data-table td { padding:.75rem 1rem; border-bottom:1px solid #f0f0f0; font-size:.88rem; }
+    .data-table tr:last-child td { border-bottom:none; }
+    .data-table tr:hover td { background:rgba(12,51,32,.03); }
+    .table-thumb {
+      width:56px; height:56px; object-fit:cover;
+      border-radius:8px; display:block;
+    }
+    .table-actions { display:flex; gap:.4rem; flex-wrap:wrap; }
+
+    /* ── BADGES ─────────────────────────────────────────── */
+    .badge {
+      display:inline-block; padding:.2rem .6rem; border-radius:999px;
+      font-size:.75rem; font-weight:700;
+    }
+    .badge-success { background:#D1FAE5; color:#065F46; }
+    .badge-danger  { background:#FEE2E2; color:#991B1B; }
+    .badge-warning { background:#FEF3C7; color:#92400E; }
+
+    /* ── STARS ──────────────────────────────────────────── */
+    .stars { color:var(--or); }
+    .star-input { display:flex; gap:.25rem; font-size:1.5rem; cursor:pointer; }
+    .star-input span { color:#ddd; transition:color .15s; }
+    .star-input span.on { color:var(--or); }
+
+    /* ── MODAL ──────────────────────────────────────────── */
+    .modal-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.5);
+      z-index:1000; display:flex; align-items:center; justify-content:center;
+      padding:1.5rem; opacity:0; visibility:hidden;
+      transition:all .25s;
+    }
+    .modal-overlay.open { opacity:1; visibility:visible; }
+    .modal {
+      background:#fff; border-radius:16px;
+      width:100%; max-width:640px; max-height:90vh; overflow-y:auto;
+      box-shadow:0 20px 60px rgba(0,0,0,.3);
+      transform:scale(.95); transition:transform .25s;
+    }
+    .modal-overlay.open .modal { transform:scale(1); }
+    .modal-header {
+      padding:1.25rem 1.5rem; border-bottom:1px solid #eee;
+      display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; background:#fff; z-index:1;
+    }
+    .modal-title { font-size:1.1rem; color:var(--vert); font-weight:700; }
+    .modal-close {
+      width:32px; height:32px; background:#f5f5f5; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; font-size:1rem; color:#666;
+      transition:background .15s;
+    }
+    .modal-close:hover { background:#e5e5e5; }
+    .modal-body { padding:1.5rem; }
+    .modal-footer {
+      padding:1rem 1.5rem; border-top:1px solid #eee;
+      display:flex; gap:.75rem; justify-content:flex-end;
+    }
+
+    /* ── FORM ───────────────────────────────────────────── */
+    .form-group { margin-bottom:1.1rem; }
+    .form-label { display:block; font-size:.85rem; font-weight:700; color:var(--vert); margin-bottom:.35rem; }
+    .form-control {
+      width:100%; padding:.65rem .9rem;
+      border:1.5px solid #e0e0e0; border-radius:8px;
+      font-size:.92rem; transition:border-color .2s;
+      background:#fff; color:#1a1a1a;
+    }
+    .form-control:focus { border-color:var(--or); outline:none; }
+    textarea.form-control { min-height:110px; resize:vertical; }
+    select.form-control { cursor:pointer; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    @media(max-width:500px){ .form-row{grid-template-columns:1fr;} }
+
+    /* ── UPLOAD ZONE ────────────────────────────────────── */
+    .upload-zone {
+      border:2px dashed #ccc; border-radius:10px; padding:2rem;
+      text-align:center; cursor:pointer; transition:all .2s;
+      background:#fafafa; position:relative;
+    }
+    .upload-zone:hover, .upload-zone.drag { border-color:var(--or); background:rgba(201,168,76,.06); }
+    .upload-zone input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; }
+    .upload-zone i { font-size:2rem; color:var(--gris-d); margin-bottom:.5rem; }
+    .upload-zone p { font-size:.88rem; color:var(--gris-d); }
+    .upload-preview {
+      display:flex; flex-wrap:wrap; gap:.75rem; margin-top:1rem;
+    }
+    .upload-preview-item {
+      position:relative; width:80px; height:80px;
+    }
+    .upload-preview-item img,
+    .upload-preview-item video {
+      width:100%; height:100%; object-fit:cover;
+      border-radius:8px; border:2px solid #eee;
+    }
+    .upload-preview-item .remove-file {
+      position:absolute; top:-6px; right:-6px;
+      width:20px; height:20px; background:var(--danger); color:#fff;
+      border-radius:50%; display:flex; align-items:center; justify-content:center;
+      font-size:.7rem; cursor:pointer;
+    }
+    .upload-progress {
+      background:#e5e5e5; border-radius:999px; height:6px; margin-top:.75rem; overflow:hidden;
+    }
+    .upload-progress-bar {
+      height:100%; background:var(--success); border-radius:999px;
+      width:0%; transition:width .3s;
+    }
+
+    /* ── DASHBOARD CARDS ────────────────────────────────── */
+    .dash-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:1.25rem; margin-bottom:2rem; }
+    .dash-card {
+      background:#fff; border-radius:var(--r); padding:1.25rem;
+      box-shadow:var(--shadow); border-left:4px solid var(--or);
+      cursor:pointer; transition:transform .15s, box-shadow .15s;
+    }
+    .dash-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.12); }
+    .dash-card-icon { font-size:1.75rem; margin-bottom:.6rem; }
+    .dash-card-num  { font-size:2rem; font-weight:700; color:var(--vert); line-height:1; }
+    .dash-card-label{ font-size:.82rem; color:var(--gris-d); margin-top:.25rem; }
+
+    /* ── LOADING ────────────────────────────────────────── */
+    .loading {
+      display:flex; align-items:center; justify-content:center;
+      padding:3rem; color:var(--gris-d); gap:.75rem; font-size:.95rem;
+    }
+    .spinner {
+      width:20px; height:20px; border:2px solid #e5e5e5;
+      border-top-color:var(--vert); border-radius:50%;
+      animation:spin .7s linear infinite;
+    }
+    @keyframes spin { to{transform:rotate(360deg);} }
+
+    .empty-state { text-align:center; padding:3rem; color:var(--gris-d); }
+    .empty-state i { font-size:3rem; opacity:.3; margin-bottom:1rem; }
+
+    /* ── RESPONSIVE ─────────────────────────────────────── */
+    @media(max-width:768px){
+      .sidebar { display:none; }
+      .admin-main { padding:1rem; }
+      .dash-grid { grid-template-columns:1fr 1fr; }
+      .data-table { font-size:.82rem; }
+      .data-table td:nth-child(3), .data-table th:nth-child(3) { display:none; }
+    }
+    @media(max-width:480px){
+      .panel-header { flex-direction:column; align-items:flex-start; }
+      .form-row { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════ LOGIN ═══════════════════════════ -->
+<div id="login-page">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="icon">🔐</div>
+      <h1>Institut MiraLocks</h1>
+      <p>Espace Administration</p>
+    </div>
+    <div class="login-field">
+      <label for="login-email">Adresse email</label>
+      <input type="email" id="login-email" placeholder="admin@miralocks.com" autocomplete="email">
+    </div>
+    <div class="login-field">
+      <label for="login-pass">Mot de passe</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-login" id="login-btn">
+      <span id="login-btn-text">Se connecter</span>
+    </button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ ADMIN ════════════════════════════ -->
+<div id="admin-page">
+
+  <!-- Header -->
+  <header class="admin-header">
+    <div class="admin-header-left">
+      <div>
+        <div class="admin-title">✦ MiraLocks Admin</div>
+        <div class="admin-subtitle" id="admin-email-display"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:.75rem;align-items:center">
+      <a href="index.html" target="_blank" class="btn-logout"><i class="fas fa-external-link-alt"></i> Voir le site</a>
+      <button class="btn-logout" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Déconnexion</button>
+    </div>
+  </header>
+
+  <div class="admin-body">
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar-section">Tableau de bord</div>
+      <div class="nav-item active" data-panel="dashboard"><i class="fas fa-chart-pie"></i> Vue d'ensemble</div>
+
+      <div class="sidebar-section" style="margin-top:.75rem">Contenu</div>
+      <div class="nav-item" data-panel="blog"><i class="fas fa-newspaper"></i> Articles Blog</div>
+      <div class="nav-item" data-panel="galerie"><i class="fas fa-images"></i> Galerie Photos</div>
+      <div class="nav-item" data-panel="videos"><i class="fas fa-video"></i> Vidéos</div>
+      <div class="nav-item" data-panel="avis">
+        <i class="fas fa-star"></i> Avis Clients
+        <span class="nav-badge" id="avis-badge" style="display:none">0</span>
+      </div>
+
+      <div class="sidebar-section" style="margin-top:.75rem">Configuration</div>
+      <div class="nav-item" data-panel="parametres"><i class="fas fa-cog"></i> Paramètres</div>
+    </nav>
+
+    <!-- Main -->
+    <main class="admin-main">
+
+      <!-- ── DASHBOARD ───────────────────────────────── -->
+      <div class="panel active" id="panel-dashboard">
+        <div class="panel-header">
+          <h1 class="panel-title">Vue d'ensemble</h1>
+          <button class="btn btn-outline" onclick="loadDashboard()"><i class="fas fa-sync"></i> Actualiser</button>
+        </div>
+        <div class="dash-grid" id="dash-grid">
+          <div class="loading"><div class="spinner"></div> Chargement…</div>
+        </div>
+        <div id="dash-pending" style="margin-top:1.5rem"></div>
+      </div>
+
+      <!-- ── BLOG ───────────────────────────────────── -->
+      <div class="panel" id="panel-blog">
+        <div class="panel-header">
+          <h1 class="panel-title">Articles Blog <span id="blog-count"></span></h1>
+          <button class="btn btn-primary" onclick="openModal('blog')"><i class="fas fa-plus"></i> Nouvel article</button>
+        </div>
+        <div id="blog-list"><div class="loading"><div class="spinner"></div> Chargement…</div></div>
+      </div>
+
+      <!-- ── GALERIE ────────────────────────────────── -->
+      <div class="panel" id="panel-galerie">
+        <div class="panel-header">
+          <h1 class="panel-title">Galerie Photos <span id="galerie-count"></span></h1>
+          <button class="btn btn-primary" onclick="openModal('galerie')"><i class="fas fa-plus"></i> Ajouter photo</button>
+        </div>
+        <div id="galerie-list"><div class="loading"><div class="spinner"></div> Chargement…</div></div>
+      </div>
+
+      <!-- ── VIDÉOS ─────────────────────────────────── -->
+      <div class="panel" id="panel-videos">
+        <div class="panel-header">
+          <h1 class="panel-title">Vidéos <span id="videos-count"></span></h1>
+          <button class="btn btn-primary" onclick="openModal('videos')"><i class="fas fa-plus"></i> Ajouter vidéo</button>
+        </div>
+        <div id="videos-list"><div class="loading"><div class="spinner"></div> Chargement…</div></div>
+      </div>
+
+      <!-- ── AVIS ───────────────────────────────────── -->
+      <div class="panel" id="panel-avis">
+        <div class="panel-header">
+          <h1 class="panel-title">Avis Clients <span id="avis-count"></span></h1>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm" onclick="loadAvis(false)"><i class="fas fa-clock"></i> En attente</button>
+            <button class="btn btn-outline btn-sm" onclick="loadAvis(true)"><i class="fas fa-check"></i> Approuvés</button>
+            <button class="btn btn-primary" onclick="openModal('avis')"><i class="fas fa-plus"></i> Ajouter un avis</button>
+          </div>
+        </div>
+        <div id="avis-list"><div class="loading"><div class="spinner"></div> Chargement…</div></div>
+      </div>
+
+      <!-- ── PARAMÈTRES ─────────────────────────────── -->
+      <div class="panel" id="panel-parametres">
+        <div class="panel-header">
+          <h1 class="panel-title">Paramètres du site</h1>
+        </div>
+
+        <!-- Carte Google Maps -->
+        <div style="background:#fff;border-radius:var(--rayon);box-shadow:var(--shadow);overflow:hidden;margin-bottom:1.5rem">
+          <div style="background:var(--vert);padding:1.25rem 1.5rem;display:flex;align-items:center;gap:1rem">
+            <div style="width:42px;height:42px;background:rgba(201,168,76,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem">🗺️</div>
+            <div>
+              <h3 style="color:var(--or);font-size:1rem;margin:0">Google Maps</h3>
+              <p style="color:rgba(255,255,255,.65);font-size:.8rem;margin:0">Clé API pour la carte intégrée sur la page Contact</p>
+            </div>
+          </div>
+          <div style="padding:1.5rem">
+
+            <!-- Statut actuel -->
+            <div id="maps-status" style="margin-bottom:1.25rem">
+              <div class="loading"><div class="spinner"></div> Vérification…</div>
+            </div>
+
+            <!-- Aperçu carte -->
+            <div id="maps-preview" style="display:none;margin-bottom:1.25rem">
+              <p style="font-size:.85rem;color:var(--gris-d);margin-bottom:.6rem"><i class="fas fa-eye"></i> Aperçu de la carte avec votre clé :</p>
+              <div style="border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.12)">
+                <iframe id="maps-iframe-preview"
+                  style="width:100%;height:260px;border:none;display:block"
+                  loading="lazy"
+                  title="Aperçu Google Maps"
+                  referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+              </div>
+            </div>
+
+            <!-- Formulaire clé API -->
+            <div class="form-group">
+              <label class="form-label" for="maps-api-key">
+                Clé API Google Maps
+                <a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank" rel="noopener"
+                   style="margin-left:.5rem;font-size:.78rem;color:var(--vert);font-weight:400">
+                  <i class="fas fa-external-link-alt"></i> Obtenir une clé
+                </a>
+              </label>
+              <div style="display:flex;gap:.75rem;align-items:flex-start">
+                <div style="flex:1;position:relative">
+                  <input type="password" id="maps-api-key" class="form-control"
+                    placeholder="AIzaSy…"
+                    autocomplete="off" spellcheck="false">
+                  <button type="button" onclick="toggleKeyVisibility()"
+                    style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;cursor:pointer;color:var(--gris-d);font-size:.9rem"
+                    title="Afficher/masquer">
+                    <i class="fas fa-eye" id="key-eye-icon"></i>
+                  </button>
+                </div>
+                <button class="btn btn-primary" onclick="saveMapsKey()" id="maps-save-btn">
+                  <i class="fas fa-save"></i> Enregistrer
+                </button>
+              </div>
+              <p style="font-size:.78rem;color:var(--gris-d);margin-top:.5rem">
+                <i class="fas fa-info-circle"></i>
+                La clé est stockée dans Supabase et chargée automatiquement sur la page Contact.
+                Activez <strong>Maps Embed API</strong> dans Google Cloud Console.
+              </p>
+            </div>
+
+            <!-- Guide rapide -->
+            <details style="margin-top:1.25rem;border:1px solid #eee;border-radius:8px;overflow:hidden">
+              <summary style="padding:.85rem 1rem;cursor:pointer;background:var(--gris);font-size:.88rem;font-weight:600;color:var(--vert);list-style:none;display:flex;align-items:center;gap:.5rem">
+                <i class="fas fa-question-circle"></i> Comment obtenir une clé Google Maps gratuite ?
+              </summary>
+              <div style="padding:1.25rem;font-size:.87rem;color:#444;line-height:1.75">
+                <ol style="padding-left:1.25rem">
+                  <li>Allez sur <a href="https://console.cloud.google.com" target="_blank" rel="noopener" style="color:var(--vert)">console.cloud.google.com</a></li>
+                  <li>Créez un projet (ou sélectionnez un existant)</li>
+                  <li>Menu → <strong>APIs &amp; Services</strong> → <strong>Bibliothèque</strong></li>
+                  <li>Recherchez <strong>"Maps Embed API"</strong> → Activer</li>
+                  <li>Menu → <strong>APIs &amp; Services</strong> → <strong>Identifiants</strong></li>
+                  <li>Cliquez <strong>"+ Créer des identifiants"</strong> → <strong>Clé API</strong></li>
+                  <li>Copiez la clé et collez-la ci-dessus</li>
+                </ol>
+                <div style="background:#FEF3C7;border-radius:6px;padding:.75rem;margin-top:.75rem;font-size:.82rem">
+                  💡 Google offre <strong>28 000 chargements/mois gratuits</strong> — largement suffisant pour un site salon.
+                </div>
+              </div>
+            </details>
+
+            <!-- Option sans clé -->
+            <div style="margin-top:1.25rem;padding:1rem;background:rgba(12,51,32,.05);border-radius:8px;border-left:3px solid var(--or)">
+              <p style="font-size:.85rem;color:var(--gris-d);margin:0">
+                <strong style="color:var(--vert)">Sans clé API :</strong>
+                La carte OpenStreetMap gratuite reste affichée avec un bouton "Ouvrir dans Google Maps".
+                La clé Google Maps est optionnelle mais donne une meilleure expérience.
+              </p>
+              <button class="btn btn-outline btn-sm" style="margin-top:.75rem" onclick="removeMapKey()">
+                <i class="fas fa-trash"></i> Supprimer la clé et utiliser OpenStreetMap
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Infos salon (futur) -->
+        <div style="background:#fff;border-radius:var(--rayon);box-shadow:var(--shadow);overflow:hidden;opacity:.5">
+          <div style="background:#888;padding:1.25rem 1.5rem;display:flex;align-items:center;gap:1rem">
+            <div style="width:42px;height:42px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem">⚙️</div>
+            <div>
+              <h3 style="color:#fff;font-size:1rem;margin:0">Informations du salon</h3>
+              <p style="color:rgba(255,255,255,.7);font-size:.8rem;margin:0">Horaires, adresse, téléphone — Bientôt disponible</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODALS ═══════════════════════════════ -->
+
+<!-- Modal Blog -->
+<div class="modal-overlay" id="modal-blog">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-blog-title">Nouvel article</span>
+      <div class="modal-close" onclick="closeModal('blog')"><i class="fas fa-times"></i></div>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="blog-edit-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Titre *</label>
+          <input type="text" class="form-control" id="blog-titre" placeholder="Titre de l'article">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Catégorie</label>
+          <select class="form-control" id="blog-cat">
+            <option value="Entretien">Entretien</option>
+            <option value="Création">Création</option>
+            <option value="Coloration">Coloration</option>
+            <option value="Conseil">Conseil</option>
+            <option value="Actualité">Actualité</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Extrait (résumé court)</label>
+        <textarea class="form-control" id="blog-extrait" rows="2" placeholder="Résumé affiché sur la liste…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contenu complet</label>
+        <textarea class="form-control" id="blog-contenu" rows="6" placeholder="Corps de l'article…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Photo de couverture</label>
+        <div class="upload-zone" id="blog-upload-zone">
+          <input type="file" id="blog-photo-file" accept="image/*">
+          <i class="fas fa-image"></i>
+          <p>Cliquez ou glissez une image ici<br><small>JPG, PNG, WebP — max 5 Mo</small></p>
+        </div>
+        <div class="upload-preview" id="blog-preview"></div>
+        <div class="upload-progress" id="blog-progress" style="display:none">
+          <div class="upload-progress-bar" id="blog-progress-bar"></div>
+        </div>
+        <input type="hidden" id="blog-photo-url">
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+          <input type="checkbox" id="blog-publie" style="width:16px;height:16px">
+          <span class="form-label" style="margin:0">Publier immédiatement</span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('blog')">Annuler</button>
+      <button class="btn btn-primary" id="blog-save-btn" onclick="saveBlog()"><i class="fas fa-save"></i> Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Galerie -->
+<div class="modal-overlay" id="modal-galerie">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Ajouter des photos</span>
+      <div class="modal-close" onclick="closeModal('galerie')"><i class="fas fa-times"></i></div>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="galerie-edit-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Titre</label>
+          <input type="text" class="form-control" id="galerie-titre" placeholder="Ex: Création locks micro">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Catégorie</label>
+          <select class="form-control" id="galerie-cat">
+            <option value="creation">Création</option>
+            <option value="entretien">Entretien</option>
+            <option value="avant-apres">Avant/Après</option>
+            <option value="equipe">Équipe</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Photos (sélection multiple possible)</label>
+        <div class="upload-zone" id="galerie-upload-zone">
+          <input type="file" id="galerie-photo-files" accept="image/*" multiple>
+          <i class="fas fa-images"></i>
+          <p>Cliquez ou glissez vos photos ici<br><small>JPG, PNG, WebP, AVIF — max 10 Mo chacune</small></p>
+        </div>
+        <div class="upload-preview" id="galerie-preview"></div>
+        <div class="upload-progress" id="galerie-progress" style="display:none">
+          <div class="upload-progress-bar" id="galerie-progress-bar"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+          <input type="checkbox" id="galerie-publie" checked style="width:16px;height:16px">
+          <span class="form-label" style="margin:0">Publier immédiatement</span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('galerie')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveGalerie()"><i class="fas fa-upload"></i> Uploader</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Vidéo -->
+<div class="modal-overlay" id="modal-videos">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-video-title">Ajouter une vidéo</span>
+      <div class="modal-close" onclick="closeModal('videos')"><i class="fas fa-times"></i></div>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="video-edit-id">
+      <div class="form-group">
+        <label class="form-label">Titre *</label>
+        <input type="text" class="form-control" id="video-titre" placeholder="Titre de la vidéo">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" id="video-desc" rows="2" placeholder="Courte description…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fichier vidéo</label>
+        <div class="upload-zone">
+          <input type="file" id="video-file" accept="video/*">
+          <i class="fas fa-video"></i>
+          <p>Cliquez ou glissez votre vidéo<br><small>MP4, MOV, WebM — max 100 Mo</small></p>
+        </div>
+        <div class="upload-preview" id="video-preview"></div>
+        <div class="upload-progress" id="video-progress" style="display:none">
+          <div class="upload-progress-bar" id="video-progress-bar"></div>
+        </div>
+        <input type="hidden" id="video-url">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Miniature (optionnel)</label>
+        <div class="upload-zone">
+          <input type="file" id="video-thumb-file" accept="image/*">
+          <i class="fas fa-image"></i>
+          <p>Image miniature<br><small>JPG, PNG — max 2 Mo</small></p>
+        </div>
+        <div class="upload-preview" id="video-thumb-preview"></div>
+        <input type="hidden" id="video-thumb-url">
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+          <input type="checkbox" id="video-publie" checked style="width:16px;height:16px">
+          <span class="form-label" style="margin:0">Publier immédiatement</span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('videos')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveVideo()"><i class="fas fa-save"></i> Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL AVIS ─────────────────────────────────────────── -->
+<div class="modal-overlay" id="modal-avis">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Ajouter un avis client</span>
+      <button class="modal-close" onclick="closeModal('avis')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nom du client *</label>
+        <input type="text" id="avis-admin-nom" class="form-control" placeholder="Ex : Afi Koffi" maxlength="80">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ville / Quartier</label>
+        <input type="text" id="avis-admin-localite" class="form-control" placeholder="Ex : Lomé, Adidogomé…" maxlength="60">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Note (étoiles) *</label>
+        <select id="avis-admin-etoiles" class="form-control">
+          <option value="5">★★★★★ — 5/5 Excellent</option>
+          <option value="4">★★★★☆ — 4/5 Très bien</option>
+          <option value="3">★★★☆☆ — 3/5 Bien</option>
+          <option value="2">★★☆☆☆ — 2/5 Passable</option>
+          <option value="1">★☆☆☆☆ — 1/5 Mauvais</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Témoignage *</label>
+        <textarea id="avis-admin-texte" class="form-control" rows="4" placeholder="Texte du témoignage client…" maxlength="600"></textarea>
+      </div>
+      <div class="form-group" style="display:flex;align-items:center;gap:.75rem">
+        <input type="checkbox" id="avis-admin-approuve" checked style="width:18px;height:18px;cursor:pointer">
+        <label for="avis-admin-approuve" style="cursor:pointer;font-weight:600;color:var(--vert)">Publier immédiatement (approuvé)</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('avis')">Annuler</button>
+      <button class="btn btn-primary" id="avis-admin-save-btn" onclick="saveAvisAdmin()"><i class="fas fa-save"></i> Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ═══════════════════ SCRIPTS ══════════════════════════════ -->
+<script src="js/supabase.js"></script>
+<script>
+'use strict';
+
+/* ── Utilitaires ─────────────────────────────────────────── */
+const $  = id => document.getElementById(id);
+const toast = (msg, type='success') => {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = `show ${type}`;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.className = '', 3200);
+};
+const openModal  = name => document.getElementById(`modal-${name}`).classList.add('open');
+const closeModal = name => document.getElementById(`modal-${name}`).classList.remove('open');
+const setLoading = (id, on) => {
+  const btn = $(id);
+  if (!btn) return;
+  btn.disabled = on;
+  btn.innerHTML = on
+    ? '<div class="spinner" style="width:16px;height:16px;border-width:2px"></div> Enregistrement…'
+    : '<i class="fas fa-save"></i> Enregistrer';
+};
+
+/* ── AUTH ────────────────────────────────────────────────── */
+$('login-btn').addEventListener('click', async () => {
+  const email = $('login-email').value.trim();
+  const pass  = $('login-pass').value;
+  const err   = $('login-error');
+  const btn   = $('login-btn');
+  if (!email || !pass) { err.textContent='Remplissez tous les champs.'; err.classList.add('show'); return; }
+  btn.disabled = true;
+  $('login-btn-text').textContent = 'Connexion…';
+  err.classList.remove('show');
+  try {
+    await sb.signIn(email, pass);
+    window.location.href = 'index.html';
+  } catch(e) {
+    err.textContent = e.message || 'Email ou mot de passe incorrect.';
+    err.classList.add('show');
+    btn.disabled = false;
+    $('login-btn-text').textContent = 'Se connecter';
+  }
+});
+$('login-pass').addEventListener('keydown', e => { if (e.key==='Enter') $('login-btn').click(); });
+
+$('logout-btn').addEventListener('click', async () => {
+  await sb.signOut();
+  $('admin-page').style.display = 'none';
+  $('login-page').style.display = 'flex';
+  $('login-pass').value = '';
+});
+
+function showAdmin() {
+  $('login-page').style.display   = 'none';
+  $('admin-page').style.display   = 'block';
+  const s = sb.getSession();
+  $('admin-email-display').textContent = s?.email || '';
+  loadDashboard();
+  loadBlog();
+}
+
+// Auto-login si session valide
+window.addEventListener('DOMContentLoaded', () => {
+  if (sb.isAdmin()) showAdmin();
+});
+
+/* ── NAVIGATION ──────────────────────────────────────────── */
+document.querySelectorAll('.nav-item[data-panel]').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById(`panel-${el.dataset.panel}`).classList.add('active');
+    const load = { blog: loadBlog, galerie: loadGalerie, videos: loadVideos, avis: () => loadAvis(false), dashboard: loadDashboard, parametres: loadParametres };
+    load[el.dataset.panel]?.();
+  });
+});
+
+/* Fermer modal sur overlay click */
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target===o) o.classList.remove('open'); });
+});
+
+/* ── DASHBOARD ───────────────────────────────────────────── */
+async function loadDashboard() {
+  const g = $('dash-grid');
+  g.innerHTML = '<div class="loading"><div class="spinner"></div> Chargement…</div>';
+  try {
+    const [blogs, photos, vids, avis, pending] = await Promise.all([
+      sb.blog.list(false),
+      sb.galerie.list(false),
+      sb.videos.list(false),
+      sb.avis.list(true),
+      sb.avis.list(false),
+    ]);
+    const pendingCount = pending.filter(a => !a.approuve).length;
+    if (pendingCount > 0) {
+      const badge = $('avis-badge');
+      badge.textContent = pendingCount;
+      badge.style.display = 'inline-block';
+    }
+    g.innerHTML = `
+      <div class="dash-card" onclick="navTo('blog')"><div class="dash-card-icon">📝</div><div class="dash-card-num">${blogs.length}</div><div class="dash-card-label">Articles blog</div></div>
+      <div class="dash-card" onclick="navTo('galerie')"><div class="dash-card-icon">📸</div><div class="dash-card-num">${photos.length}</div><div class="dash-card-label">Photos galerie</div></div>
+      <div class="dash-card" onclick="navTo('videos')"><div class="dash-card-icon">🎬</div><div class="dash-card-num">${vids.length}</div><div class="dash-card-label">Vidéos</div></div>
+      <div class="dash-card" onclick="navTo('avis')"><div class="dash-card-icon">⭐</div><div class="dash-card-num">${avis.length}</div><div class="dash-card-label">Avis approuvés</div></div>
+    `;
+    if (pendingCount > 0) {
+      $('dash-pending').innerHTML = `
+        <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:var(--r);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+          <span style="color:#92400E"><i class="fas fa-clock"></i> <strong>${pendingCount} avis</strong> en attente d'approbation</span>
+          <button class="btn btn-warning btn-sm" onclick="navTo('avis')">Modérer maintenant</button>
+        </div>`;
+    } else { $('dash-pending').innerHTML = ''; }
+  } catch(e) {
+    g.innerHTML = `<div style="color:var(--danger);padding:1rem">Erreur : ${e.message}</div>`;
+  }
+}
+function navTo(panel) {
+  document.querySelector(`.nav-item[data-panel="${panel}"]`)?.click();
+}
+
+/* ── BLOG ────────────────────────────────────────────────── */
+async function loadBlog() {
+  const el = $('blog-list');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div> Chargement…</div>';
+  try {
+    const posts = await sb.blog.list(false);
+    $('blog-count').textContent = `(${posts.length})`;
+    if (!posts.length) {
+      el.innerHTML = '<div class="empty-state"><i class="fas fa-newspaper"></i><p>Aucun article. Créez le premier !</p></div>';
+      return;
+    }
+    el.innerHTML = `<table class="data-table">
+      <thead><tr><th>Photo</th><th>Titre</th><th>Catégorie</th><th>Statut</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody>${posts.map(p => `
+        <tr>
+          <td>${p.photo_url ? `<img src="${p.photo_url}" class="table-thumb" loading="lazy">` : '<div style="width:56px;height:56px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center"><i class="fas fa-image" style="color:#ccc"></i></div>'}</td>
+          <td><strong>${p.titre}</strong><br><small style="color:var(--gris-d)">${(p.extrait||'').slice(0,60)}…</small></td>
+          <td><span class="badge badge-warning">${p.categorie||'—'}</span></td>
+          <td><span class="badge ${p.publie?'badge-success':'badge-danger'}">${p.publie?'Publié':'Brouillon'}</span></td>
+          <td style="white-space:nowrap">${new Date(p.created_at).toLocaleDateString('fr')}</td>
+          <td><div class="table-actions">
+            <button class="btn btn-sm btn-outline btn-icon" onclick="editBlog(${p.id})" title="Modifier"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-sm ${p.publie?'btn-warning':'btn-success'} btn-icon" onclick="toggleBlog(${p.id},${p.publie})" title="${p.publie?'Dépublier':'Publier'}"><i class="fas fa-${p.publie?'eye-slash':'eye'}"></i></button>
+            <button class="btn btn-sm btn-danger btn-icon" onclick="deleteBlog(${p.id},'${p.photo_url||''}')" title="Supprimer"><i class="fas fa-trash"></i></button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody></table>`;
+  } catch(e) { el.innerHTML = `<div style="color:var(--danger);padding:1rem">Erreur : ${e.message}</div>`; }
+}
+
+function openModal_Blog_new() {
+  $('modal-blog-title').textContent = 'Nouvel article';
+  $('blog-edit-id').value = '';
+  ['blog-titre','blog-extrait','blog-contenu'].forEach(id => $(id).value = '');
+  $('blog-photo-url').value = '';
+  $('blog-preview').innerHTML = '';
+  $('blog-publie').checked = false;
+  openModal('blog');
+}
+// override
+window.openModal = (name) => {
+  if (name === 'blog') openModal_Blog_new();
+  else document.getElementById(`modal-${name}`).classList.add('open');
+};
+
+async function editBlog(id) {
+  const p = await sb.blog.get(id);
+  if (!p) return;
+  $('modal-blog-title').textContent = 'Modifier l\'article';
+  $('blog-edit-id').value = p.id;
+  $('blog-titre').value   = p.titre || '';
+  $('blog-extrait').value = p.extrait || '';
+  $('blog-contenu').value = p.contenu || '';
+  $('blog-cat').value     = p.categorie || 'Entretien';
+  $('blog-publie').checked = !!p.publie;
+  $('blog-photo-url').value = p.photo_url || '';
+  $('blog-preview').innerHTML = p.photo_url
+    ? `<div class="upload-preview-item"><img src="${p.photo_url}"><div class="remove-file" onclick="$('blog-photo-url').value='';$('blog-preview').innerHTML=''">×</div></div>`
+    : '';
+  openModal('blog');
+}
+
+async function saveBlog() {
+  const titre = $('blog-titre').value.trim();
+  if (!titre) { toast('Le titre est obligatoire', 'error'); return; }
+  setLoading('blog-save-btn', true);
+  try {
+    // Upload photo si nouveau fichier
+    const file = $('blog-photo-file').files[0];
+    let photoUrl = $('blog-photo-url').value;
+    if (file) {
+      showProgress('blog', 30);
+      photoUrl = await sb.upload('blog', file);
+      showProgress('blog', 100);
+    }
+    const data = {
+      titre,
+      extrait:   $('blog-extrait').value.trim(),
+      contenu:   $('blog-contenu').value.trim(),
+      categorie: $('blog-cat').value,
+      publie:    $('blog-publie').checked,
+      photo_url: photoUrl || null,
+    };
+    const id = $('blog-edit-id').value;
+    if (id) await sb.blog.update(id, data);
+    else    await sb.blog.create(data);
+    toast(id ? 'Article mis à jour !' : 'Article créé !');
+    closeModal('blog');
+    loadBlog();
+    loadDashboard();
+  } catch(e) { toast(e.message, 'error'); }
+  finally { setLoading('blog-save-btn', false); hideProgress('blog'); $('blog-photo-file').value=''; }
+}
+
+async function toggleBlog(id, current) {
+  await sb.blog.togglePublish(id, current);
+  toast(current ? 'Article dépublié' : 'Article publié !');
+  loadBlog();
+}
+
+async function deleteBlog(id, photoUrl) {
+  if (!confirm('Supprimer cet article définitivement ?')) return;
+  await sb.blog.delete(id, photoUrl);
+  toast('Article supprimé', 'warning');
+  loadBlog();
+  loadDashboard();
+}
+
+/* ── GALERIE ─────────────────────────────────────────────── */
+async function loadGalerie() {
+  const el = $('galerie-list');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div> Chargement…</div>';
+  try {
+    const photos = await sb.galerie.list(false);
+    $('galerie-count').textContent = `(${photos.length})`;
+    if (!photos.length) {
+      el.innerHTML = '<div class="empty-state"><i class="fas fa-images"></i><p>Aucune photo. Ajoutez-en !</p></div>';
+      return;
+    }
+    el.innerHTML = `<table class="data-table">
+      <thead><tr><th>Photo</th><th>Titre</th><th>Catégorie</th><th>Statut</th><th>Actions</th></tr></thead>
+      <tbody>${photos.map(p => `
+        <tr>
+          <td><img src="${p.photo_url}" class="table-thumb" loading="lazy"></td>
+          <td>${p.titre||'—'}</td>
+          <td><span class="badge badge-warning">${p.categorie||'—'}</span></td>
+          <td><span class="badge ${p.publie?'badge-success':'badge-danger'}">${p.publie?'Publié':'Masqué'}</span></td>
+          <td><div class="table-actions">
+            <button class="btn btn-sm ${p.publie?'btn-warning':'btn-success'} btn-icon" onclick="toggleGalerie(${p.id},${p.publie})"><i class="fas fa-${p.publie?'eye-slash':'eye'}"></i></button>
+            <button class="btn btn-sm btn-danger btn-icon" onclick="deleteGalerie(${p.id},'${p.photo_url}')"><i class="fas fa-trash"></i></button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody></table>`;
+  } catch(e) { el.innerHTML = `<div style="color:var(--danger);padding:1rem">Erreur : ${e.message}</div>`; }
+}
+
+// Préview multi-photos
+$('galerie-photo-files').addEventListener('change', function() {
+  const prev = $('galerie-preview');
+  prev.innerHTML = '';
+  Array.from(this.files).forEach(f => {
+    const url = URL.createObjectURL(f);
+    prev.innerHTML += `<div class="upload-preview-item"><img src="${url}"></div>`;
+  });
+});
+
+async function saveGalerie() {
+  const files = $('galerie-photo-files').files;
+  if (!files.length) { toast('Sélectionnez au moins une photo', 'error'); return; }
+  const prog = $('galerie-progress');
+  const bar  = $('galerie-progress-bar');
+  prog.style.display = 'block';
+  try {
+    let done = 0;
+    for (const file of files) {
+      const url = await sb.upload('galerie', file);
+      await sb.galerie.create({
+        titre:    $('galerie-titre').value.trim() || file.name.replace(/\.[^.]+$/,''),
+        categorie: $('galerie-cat').value,
+        photo_url: url,
+        publie:    $('galerie-publie').checked,
+        ordre:     0,
+      });
+      done++;
+      bar.style.width = `${(done / files.length) * 100}%`;
+    }
+    toast(`${done} photo(s) ajoutée(s) !`);
+    closeModal('galerie');
+    loadGalerie();
+    loadDashboard();
+  } catch(e) { toast(e.message, 'error'); }
+  finally { prog.style.display='none'; bar.style.width='0%'; $('galerie-photo-files').value=''; $('galerie-preview').innerHTML=''; }
+}
+
+async function toggleGalerie(id, current) {
+  await sb.galerie.togglePublish(id, current);
+  toast(current ? 'Photo masquée' : 'Photo publiée !');
+  loadGalerie();
+}
+async function deleteGalerie(id, url) {
+  if (!confirm('Supprimer cette photo ?')) return;
+  await sb.galerie.delete(id, url);
+  toast('Photo supprimée', 'warning');
+  loadGalerie();
+  loadDashboard();
+}
+
+/* ── VIDÉOS ──────────────────────────────────────────────── */
+async function loadVideos() {
+  const el = $('videos-list');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div> Chargement…</div>';
+  try {
+    const vids = await sb.videos.list(false);
+    $('videos-count').textContent = `(${vids.length})`;
+    if (!vids.length) {
+      el.innerHTML = '<div class="empty-state"><i class="fas fa-video"></i><p>Aucune vidéo. Ajoutez-en !</p></div>';
+      return;
+    }
+    el.innerHTML = `<table class="data-table">
+      <thead><tr><th>Miniature</th><th>Titre</th><th>Statut</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody>${vids.map(v => `
+        <tr>
+          <td>${v.thumbnail_url
+            ? `<img src="${v.thumbnail_url}" class="table-thumb" loading="lazy">`
+            : `<div style="width:56px;height:56px;background:#111;border-radius:8px;display:flex;align-items:center;justify-content:center"><i class="fas fa-video" style="color:#555"></i></div>`}</td>
+          <td><strong>${v.titre}</strong><br><small style="color:var(--gris-d)">${(v.description||'').slice(0,60)}</small></td>
+          <td><span class="badge ${v.publie?'badge-success':'badge-danger'}">${v.publie?'Publié':'Masqué'}</span></td>
+          <td>${new Date(v.created_at).toLocaleDateString('fr')}</td>
+          <td><div class="table-actions">
+            <button class="btn btn-sm ${v.publie?'btn-warning':'btn-success'} btn-icon" onclick="toggleVideo(${v.id},${v.publie})"><i class="fas fa-${v.publie?'eye-slash':'eye'}"></i></button>
+            <button class="btn btn-sm btn-danger btn-icon" onclick="deleteVideo(${v.id},'${v.video_url||''}','${v.thumbnail_url||''}')"><i class="fas fa-trash"></i></button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody></table>`;
+  } catch(e) { el.innerHTML = `<div style="color:var(--danger);padding:1rem">Erreur : ${e.message}</div>`; }
+}
+
+$('video-file').addEventListener('change', function() {
+  const prev = $('video-preview');
+  if (this.files[0]) {
+    const url = URL.createObjectURL(this.files[0]);
+    prev.innerHTML = `<div class="upload-preview-item"><video src="${url}" style="width:100%;height:80px;object-fit:cover;border-radius:8px"></video></div>`;
+  }
+});
+$('video-thumb-file').addEventListener('change', function() {
+  const prev = $('video-thumb-preview');
+  if (this.files[0]) {
+    const url = URL.createObjectURL(this.files[0]);
+    prev.innerHTML = `<div class="upload-preview-item"><img src="${url}"></div>`;
+  }
+});
+
+async function saveVideo() {
+  const titre = $('video-titre').value.trim();
+  if (!titre) { toast('Le titre est obligatoire', 'error'); return; }
+  const vFile = $('video-file').files[0];
+  if (!vFile && !$('video-url').value) { toast('Sélectionnez un fichier vidéo', 'error'); return; }
+  try {
+    const prog = $('video-progress');
+    prog.style.display = 'block';
+    showProgress('video', 20);
+    let videoUrl = $('video-url').value;
+    if (vFile) { videoUrl = await sb.upload('videos', vFile); showProgress('video', 60); }
+    let thumbUrl = $('video-thumb-url').value;
+    const tFile = $('video-thumb-file').files[0];
+    if (tFile) { thumbUrl = await sb.upload('video-thumbs', tFile); showProgress('video', 90); }
+    const data = {
+      titre, description: $('video-desc').value.trim(),
+      video_url: videoUrl, thumbnail_url: thumbUrl || null,
+      publie: $('video-publie').checked,
+    };
+    const id = $('video-edit-id').value;
+    if (id) await sb.videos.update(id, data);
+    else    await sb.videos.create(data);
+    showProgress('video', 100);
+    toast('Vidéo enregistrée !');
+    closeModal('videos');
+    loadVideos();
+    loadDashboard();
+  } catch(e) { toast(e.message, 'error'); }
+  finally { hideProgress('video'); }
+}
+
+async function toggleVideo(id, current) {
+  await sb.videos.togglePublish(id, current);
+  toast(current ? 'Vidéo masquée' : 'Vidéo publiée !');
+  loadVideos();
+}
+async function deleteVideo(id, vUrl, tUrl) {
+  if (!confirm('Supprimer cette vidéo ?')) return;
+  await sb.videos.delete(id, vUrl, tUrl);
+  toast('Vidéo supprimée', 'warning');
+  loadVideos();
+  loadDashboard();
+}
+
+/* ── AVIS ────────────────────────────────────────────────── */
+async function loadAvis(onlyApproved) {
+  const el = $('avis-list');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div> Chargement…</div>';
+  try {
+    const all = await sb.avis.list(false);
+    const list = onlyApproved ? all.filter(a => a.approuve) : all.filter(a => !a.approuve);
+    const pending = all.filter(a => !a.approuve).length;
+    $('avis-count').textContent = `(${onlyApproved ? 'approuvés' : 'en attente'} : ${list.length})`;
+    const badge = $('avis-badge');
+    badge.textContent = pending;
+    badge.style.display = pending > 0 ? 'inline-block' : 'none';
+
+    if (!list.length) {
+      el.innerHTML = `<div class="empty-state"><i class="fas fa-star"></i><p>${onlyApproved ? 'Aucun avis approuvé' : 'Aucun avis en attente — tout est traité ✅'}</p></div>`;
+      return;
+    }
+    el.innerHTML = `<table class="data-table">
+      <thead><tr><th>Client</th><th>Note</th><th>Avis</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody>${list.map(a => `
+        <tr>
+          <td><strong>${a.nom}</strong><br><small>${a.localite||''}</small></td>
+          <td><span class="stars">${'★'.repeat(a.etoiles||5)}${'☆'.repeat(5-(a.etoiles||5))}</span></td>
+          <td style="max-width:280px"><em style="font-size:.88rem;color:var(--gris-d)">"${(a.texte||'').slice(0,120)}…"</em></td>
+          <td style="white-space:nowrap">${new Date(a.created_at).toLocaleDateString('fr')}</td>
+          <td><div class="table-actions">
+            ${!a.approuve ? `<button class="btn btn-sm btn-success btn-icon" onclick="approveAvis(${a.id})" title="Approuver"><i class="fas fa-check"></i></button>` : ''}
+            <button class="btn btn-sm btn-danger btn-icon" onclick="deleteAvis(${a.id})" title="Supprimer"><i class="fas fa-trash"></i></button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody></table>`;
+  } catch(e) { el.innerHTML = `<div style="color:var(--danger);padding:1rem">Erreur : ${e.message}</div>`; }
+}
+
+async function approveAvis(id) {
+  try {
+    await sb.avis.approve(id);
+    toast('Avis approuvé et publié !');
+    loadAvis(false);
+    loadDashboard();
+  } catch(e) { toast(e.message, 'error'); }
+}
+async function deleteAvis(id) {
+  if (!confirm('Supprimer cet avis ?')) return;
+  try {
+    await sb.avis.delete(id);
+    toast('Avis supprimé', 'warning');
+    loadAvis(false);
+    loadDashboard();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function saveAvisAdmin() {
+  const nom   = $('avis-admin-nom').value.trim();
+  const texte = $('avis-admin-texte').value.trim();
+  if (!nom)         { toast('Le nom est obligatoire', 'error'); return; }
+  if (!texte)       { toast('Le témoignage est obligatoire', 'error'); return; }
+  setLoading('avis-admin-save-btn', true);
+  try {
+    // Insertion directe avec token admin (contourne le INSERT public)
+    const s = sb.getSession();
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/avis_clients`, {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        SUPABASE_ANON,
+        'Authorization': `Bearer ${s.token}`,
+        'Prefer':        'return=minimal',
+      },
+      body: JSON.stringify({
+        nom,
+        localite:  $('avis-admin-localite').value.trim() || null,
+        etoiles:   +$('avis-admin-etoiles').value,
+        texte,
+        approuve:  $('avis-admin-approuve').checked,
+      }),
+    });
+    if (!r.ok) {
+      const e = await r.json().catch(() => ({}));
+      throw new Error(e.message || e.details || `Erreur ${r.status}`);
+    }
+    toast('Avis ajouté !');
+    closeModal('avis');
+    // Réinitialiser le formulaire
+    $('avis-admin-nom').value     = '';
+    $('avis-admin-localite').value = '';
+    $('avis-admin-texte').value   = '';
+    $('avis-admin-etoiles').value = '5';
+    $('avis-admin-approuve').checked = true;
+    loadAvis($('avis-admin-approuve').checked);
+    loadDashboard();
+  } catch(e) { toast(e.message, 'error'); }
+  finally { setLoading('avis-admin-save-btn', false); }
+}
+
+/* ── UPLOAD PROGRESS HELPERS ─────────────────────────────── */
+function showProgress(name, pct) {
+  const prog = $(`${name}-progress`);
+  const bar  = $(`${name}-progress-bar`);
+  if (prog) prog.style.display = 'block';
+  if (bar)  bar.style.width = pct + '%';
+}
+function hideProgress(name) {
+  const prog = $(`${name}-progress`);
+  const bar  = $(`${name}-progress-bar`);
+  setTimeout(() => {
+    if (prog) prog.style.display = 'none';
+    if (bar)  bar.style.width = '0%';
+  }, 600);
+}
+
+/* ── DRAG & DROP ─────────────────────────────────────────── */
+document.querySelectorAll('.upload-zone').forEach(zone => {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag');
+    const input = zone.querySelector('input[type=file]');
+    if (input) { input.files = e.dataTransfer.files; input.dispatchEvent(new Event('change')); }
+  });
+});
+
+/* Préview blog */
+$('blog-photo-file').addEventListener('change', function() {
+  if (this.files[0]) {
+    const url = URL.createObjectURL(this.files[0]);
+    $('blog-preview').innerHTML = `<div class="upload-preview-item"><img src="${url}"><div class="remove-file" onclick="this.parentNode.parentNode.innerHTML='';$('blog-photo-file').value=''">×</div></div>`;
+  }
+});
+
+/* ══════════════════════════════════════════════════════════
+   PARAMÈTRES — Google Maps API Key
+   Stockée dans Supabase table : site_settings
+   Colonne : id (text PK), valeur (text)
+   Row     : { id: 'google_maps_key', valeur: 'AIza...' }
+══════════════════════════════════════════════════════════ */
+
+async function loadParametres() {
+  const statusEl = $('maps-status');
+  statusEl.innerHTML = '<div class="loading"><div class="spinner"></div> Vérification de la clé…</div>';
+
+  try {
+    const key = await sb.settings.get('google_maps_key');
+    if (key) {
+      $('maps-api-key').value = key;
+      statusEl.innerHTML = `
+        <div style="display:flex;align-items:center;gap:.6rem;padding:.75rem 1rem;background:#D1FAE5;border:1px solid #A7F3D0;border-radius:8px">
+          <i class="fas fa-check-circle" style="color:#065F46;font-size:1.1rem"></i>
+          <div>
+            <strong style="color:#065F46;font-size:.9rem">Clé Google Maps configurée</strong>
+            <p style="color:#065F46;font-size:.8rem;margin:.1rem 0 0">La carte Google Maps est active sur la page Contact.</p>
+          </div>
+          <span style="margin-left:auto;font-size:.78rem;color:#065F46;opacity:.7">${key.slice(0,12)}…</span>
+        </div>`;
+      showMapsPreview(key);
+    } else {
+      statusEl.innerHTML = `
+        <div style="display:flex;align-items:center;gap:.6rem;padding:.75rem 1rem;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px">
+          <i class="fas fa-exclamation-triangle" style="color:#92400E;font-size:1.1rem"></i>
+          <div>
+            <strong style="color:#92400E;font-size:.9rem">Aucune clé configurée</strong>
+            <p style="color:#92400E;font-size:.8rem;margin:.1rem 0 0">La carte OpenStreetMap gratuite est utilisée. Ajoutez une clé Google Maps pour une meilleure expérience.</p>
+          </div>
+        </div>`;
+    }
+  } catch(e) {
+    // Table n'existe pas encore — afficher guide création
+    statusEl.innerHTML = `
+      <div style="padding:.75rem 1rem;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;font-size:.85rem;color:#991B1B">
+        <strong><i class="fas fa-database"></i> Table SQL manquante.</strong>
+        Exécutez ce SQL dans Supabase pour activer les paramètres :
+        <pre style="background:#fff;border:1px solid #eee;border-radius:6px;padding:.75rem;margin:.75rem 0;font-size:.8rem;overflow-x:auto;color:#333">CREATE TABLE site_settings (
+  id     TEXT PRIMARY KEY,
+  valeur TEXT NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
+
+-- Lecture publique (pour charger la clé sur le site)
+CREATE POLICY "public_read_settings"
+  ON site_settings FOR SELECT USING (true);
+
+-- Écriture admin uniquement
+CREATE POLICY "admin_write_settings"
+  ON site_settings FOR ALL
+  USING (auth.role() = 'authenticated');</pre>
+        <button class="btn btn-warning btn-sm" onclick="loadParametres()"><i class="fas fa-sync"></i> Réessayer</button>
+      </div>`;
+  }
+}
+
+function showMapsPreview(key) {
+  const preview = $('maps-preview');
+  const iframe  = $('maps-iframe-preview');
+  if (!preview || !iframe || !key) return;
+  iframe.src = `https://www.google.com/maps/embed/v1/place?key=${key}&q=6.224345,1.193420&zoom=16&language=fr`;
+  preview.style.display = 'block';
+}
+
+async function saveMapsKey() {
+  const key = $('maps-api-key').value.trim();
+  if (!key) { toast('Entrez une clé API', 'error'); return; }
+  if (!key.startsWith('AIza')) { toast('Clé invalide — elle doit commencer par "AIza"', 'error'); return; }
+
+  const btn = $('maps-save-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px"></div> Enregistrement…';
+
+  try {
+    await sb.settings.set('google_maps_key', key);
+    toast('Clé Google Maps enregistrée ! La carte est maintenant active sur le site.', 'success');
+    loadParametres(); // Rafraîchir le statut
+  } catch(e) {
+    toast('Erreur : ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
+  }
+}
+
+async function removeMapKey() {
+  if (!confirm('Supprimer la clé Google Maps ? La carte OpenStreetMap sera utilisée à la place.')) return;
+  try {
+    await sb.settings.delete('google_maps_key');
+    $('maps-api-key').value = '';
+    $('maps-preview').style.display = 'none';
+    toast('Clé supprimée. OpenStreetMap est maintenant utilisé.', 'warning');
+    loadParametres();
+  } catch(e) {
+    toast('Erreur : ' + e.message, 'error');
+  }
+}
+
+function toggleKeyVisibility() {
+  const input = $('maps-api-key');
+  const icon  = $('key-eye-icon');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.className = 'fas fa-eye-slash';
+  } else {
+    input.type = 'password';
+    icon.className = 'fas fa-eye';
+  }
+}
+</script>
+</body>
+</html>
